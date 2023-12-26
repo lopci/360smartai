@@ -51,7 +51,7 @@ Cookie: q=u=&t=1;t=&v=2.0&a=1; qid=1234123412; sid=4a20145c62428d31b52b53c9ccbfc
 sn=361TY*******542&infoType=21020&data=%7B%22ctrlCode%22%3A3010%7D&devType=3
 ```
 
-# Command List
+# Main API Command List
 
 
 Name | infoType | Request Data | Recieve Data | Notes
@@ -66,6 +66,16 @@ Set Avoid Walls | 21024 | {"cmd":"setSoftAlongWall", "value":1} | None |
 Unknown 1 | 21011 | {"startPos":0,"userId":"0","mask":0} | None | Unknown. Sent regularly during cleaning.
 Unknown 2 | 21015 | None | None | Sent once on boot. Unknown. Doesn't appear to cause any issues if it isn't sent.
 
+
+# UDP API
+
+There is a UDP API on port 8790. It is normally closed, and opened when RC mode is enabled. It operates similarly to the Main API. It is not yet known if normal infoType commands can be sent here; this could allow local control. All known commands use infoType 20120
+
+Sending movement commands: `{"infoType":21020,"data":{"ctrlCode":3013,"ctrlParams":{"speedV":0.000000,"speedW":0.000000}},"packId":27}`
+
+Reporting current position: `{"message":"OK","infoType":21020,"x":-261,"y":-392,"angle":1410,"packId":27}`
+
+Unknown, possibly to close connection: `{"infoType":21020,"data":{"ctrlCode":4000},"packId":194}`
 
 # API endpoints:
 
