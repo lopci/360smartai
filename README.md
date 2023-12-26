@@ -1,4 +1,64 @@
+# Authentication
+
+A QID and SID, and vacuum SN are required. (User and session IDs)
+
+## Obtaining the QID:
+
+1. Sign into the 360 website using this link: [https://i.360.cn/reg/?src=pcw_open_app&destUrl=http%3A%2F%2Fdev.app.360.cn%2Fapp%2Flist](https://i.360.cn/login/?src=pcw_home&destUrl=https://www.360.cn/)
+2. Visit [http://open.app.360.cn/developer/](http://open.app.360.cn/bbs/index) and copy the ten digit number beginning in `360Uxxxxxxxx` at the top right. This is your QID. It should look like this: `3123795435`
+
+## Obtaining the SID:
+
+The SID is a 32-character long session ID used to authenticate HTTP requests to the API. Obtaining this key is currently non-trivial and will be documented after a better method is found for extracting it. 
+
+## Obtaining the SN:
+
+The SN can be viewed in Toolbox->Settings->Device Info on the app. 
+
+## Generating a cookie
+
+Once you have your SID and UID, you can use the following cookie to authenticate:
+
+```text
+q=u=&t=1;t=&v=2.0&a=1; qid=1234123412; sid=4a20145c62428d31b52b53c9ccbfcee4
+```
+
+
+
+# Sending commands
+
+Most commands are send to the `clean/cmd/send` endpoint. Here is an example of the "Find Robot" command, which makes it speak. 
+
+```bash
+curl -X POST \
+  http://q.smart.360.cn/clean/cmd/send \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Host: q.smart.360.cn' \
+  -H 'Connection: Keep-Alive' \
+  -H 'Accept-Encoding: gzip' \
+  -H 'Cookie: q=u=&t=1;t=&v=2.0&a=1; qid=1234123412; sid=4a20145c62428d31b52b53c9ccbfcee4' \
+  -d 'sn=361TY*******542&infoType=21020&data=%7B%22ctrlCode%22%3A3010%7D&devType=3'
+```
+```text
+POST /clean/cmd/send HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+Content-Length: 234
+Host: q.smart.360.cn
+Connection: Keep-Alive
+Accept-Encoding: gzip
+Cookie: q=u=&t=1;t=&v=2.0&a=1; qid=1234123412; sid=4a20145c62428d31b52b53c9ccbfcee4
+
+sn=361TY*******542&infoType=21020&data=%7B%22ctrlCode%22%3A3010%7D&devType=3
+```
+
+# Command List
+
+
+
+# API endpoints:
+
 This is a list of endpoints which is used by the 360 mobile app to control 360 smart ai devices like 360 S5 / S6 / S7 vacuum cleaner.
+
 
 # clean
 https://q.smart.360.cn/clean/cmd/send
