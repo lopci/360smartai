@@ -24,9 +24,20 @@ Returns monthly and weekly history of square meters cleaned. Used on the Cleanin
 https://q.smart.360.cn/clean/record/getOne
 https://q.smart.360.cn/clean/ad/applist
 
+https://q.smart.360.cn/clean/dev/getMaterialStatus
+
+Unknown. No data is sent or recieved, just "Succeeded". Appears to be accessed once on first launch. 
+
+
 https://smart.360.cn/clean/modelalias.json
 
 Returns a list of all the vaccum models with some OTA and naming data. Has flags (ovLogReport and cnLogReport) that appear to be whether log reporting is enabled on overseas servers and domestic servers
+
+https://smart.360.cn/clean/errorInfo_us.json
+
+No authentication required. Returns a list of error codes and localized (en_us) strings. 
+
+
 
 
 
