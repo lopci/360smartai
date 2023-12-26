@@ -2,10 +2,25 @@ This is a list of endpoints which is used by the 360 mobile app to control 360 s
 
 # clean
 https://q.smart.360.cn/clean/cmd/send
+
+Most of the commands are sent here. Includes heartbeat, sweep, voice, notify, etc.
+
 https://q.smart.360.cn/clean/devuser/updateInfo
+
 https://q.smart.360.cn/clean/record/statis
+
+Returns total lifetime cleaning statistics for a given serial number, and the human readable string (data.clues) used on the Cleaning Report page of the app. 
+
 https://q.smart.360.cn/clean/record/allStatis
+
 https://q.smart.360.cn/clean/record/getList
+
+Returns an array of recent cleaning sessions, including time, modes, statistiscs and success. Indexed by `data.list[].cleanId`, which is a string in the format `${Serial}-${Timestamp}`, (which appears to match `data.list[].startTime`)
+
+https://q.smart.360.cn/clean/record/recentlycleanlist
+
+Returns monthly and weekly history of square meters cleaned. Used on the Cleaning Report page of the app. 
+
 https://q.smart.360.cn/clean/record/getOne
 https://q.smart.360.cn/clean/ad/applist
 
