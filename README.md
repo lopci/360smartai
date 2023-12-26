@@ -54,6 +54,18 @@ sn=361TY*******542&infoType=21020&data=%7B%22ctrlCode%22%3A3010%7D&devType=3
 # Command List
 
 
+Name | infoType | Request Data | Recieve Data | Notes
+--- | --- | --- | --- | ---
+Clean | 21005 | {"mode":"smartClean","globalCleanTimes":1} | None |
+Recharge | 21012 | {"cmd":"start"} | None | 
+Pause | 21017 |  {"cmd":"pause"} | None |
+Heartbeat | 21006 | {"heartbeatSec":60} | None | Unsure what exactly it's used for
+Set Clean Mode | 21022 | {"cmd":"quiet", "cleanType":"total"} | None | cmd one of ["quiet","auto","strong","max"]
+Set LED mode | 21024 | {"cmd":"setledswitch","value":0} | None | 
+Set Avoid Walls | 21024 | {"cmd":"setSoftAlongWall", "value":1} | None |
+Unknown 1 | 21011 | {"startPos":0,"userId":"0","mask":0} | None | Unknown. Sent regularly during cleaning.
+Unknown 2 | 21015 | None | None | Sent once on boot. Unknown. Doesn't appear to cause any issues if it isn't sent.
+
 
 # API endpoints:
 
