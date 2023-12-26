@@ -24,6 +24,12 @@ Returns monthly and weekly history of square meters cleaned. Used on the Cleanin
 https://q.smart.360.cn/clean/record/getOne
 https://q.smart.360.cn/clean/ad/applist
 
+https://smart.360.cn/clean/modelalias.json
+
+Returns a list of all the vaccum models with some OTA and naming data. Has flags (ovLogReport and cnLogReport) that appear to be whether log reporting is enabled on overseas servers and domestic servers
+
+
+
 # map
 https://q.smart.360.cn/clean/record/getBackupMapList
 https://q.smart.360.cn/s3_file_new/iot-master-clean-online-pub1-bjyt
