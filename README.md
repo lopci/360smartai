@@ -53,6 +53,41 @@ https://p.s.360.cn/pstat/plog.php
 
 # common
 https://q.smart.360.cn/common/dev/GetList
+
+Returns a list of vaccums assosciated with an account. Authentication required.
+
+```json
+{
+  "errno": 0,
+  "errmsg": "Succeeded",
+  "data": {
+    "list": [
+      {
+        "sn": "[redacted]",
+        "devType": 3,
+        "icon": "https://p.ssl.qhimg.com/t01047fcf6ee991aeb9.png",
+        "title": "Example Vacuum",
+        "hardware": "S7",
+        "pkcode": "",
+        "hwSn": "",
+        "version": "1.8.9",
+        "versionCode": 2976,
+        "role": 2,
+        "online": 1,
+        "support": "{\"carpetMode\":1,\"cleanTimesInTimer\":1,\"deleteMap\":1,\"led\":1,\"logReport\":1,\"maxBanArea30\":1,\"maxMode\":1,\"mop\":1,\"mopBanArea\":1,\"multiQuietHours\":1,\"reboot\":1,\"remoteControl\":1,\"remoteControlWithMap\":1,\"restoreMap\":1,\"roomSweep\":1,\"rotateMap\":1,\"rssi\":1,\"saveMap\":1,\"setRoomAttrib\":1,\"smartArea\":1,\"softAlongWall\":1,\"sweepAreaInTimer\":1,\"timedSweepMode\":1,\"virtualWall\":1,\"voicePacket\":1,\"volume\":1}",
+        "alexaDefault": 0,
+        "ownerQid": 0,
+        "ownerImage": "",
+        "ownerNickName": "[redacted]",
+        "bindTime": 0
+      }
+    ]
+  }
+}
+```
+
+
+
 https://q.smart.360.cn/common/share/getInviteList
 https://q.smart.360.cn/common/share/inviteByCode
 https://q.smart.360.cn/common/share/getInviteList
