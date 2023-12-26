@@ -13,6 +13,24 @@ Returns total lifetime cleaning statistics for a given serial number, and the hu
 
 https://q.smart.360.cn/clean/record/allStatis
 
+Similar to `clean/record/statis`, just returns seconds instead of hours. 
+
+```json
+{
+  "errno": 0,
+  "errmsg": "Succeeded",
+  "data": {
+    "allCleanArea": 5183,
+    "allCleanCount": 662,
+    "allCleanTime": 833558,
+    "allMopArea": 0,
+    "bindNum": 1
+  }
+}
+```
+
+
+
 https://q.smart.360.cn/clean/record/getList
 
 Returns an array of recent cleaning sessions, including time, modes, statistiscs and success. Indexed by `data.list[].cleanId`, which is a string in the format `${Serial}-${Timestamp}`, (which appears to match `data.list[].startTime`)
