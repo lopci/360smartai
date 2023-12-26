@@ -27,7 +27,7 @@ q=u=&t=1;t=&v=2.0&a=1; qid=1234123412; sid=4a20145c62428d31b52b53c9ccbfcee4
 
 # Sending commands
 
-Most commands are send to the `clean/cmd/send` endpoint. Here is an example of the "Find Robot" command, which makes it speak. 
+With the above info you can now send arbitrary commands to the vacuum. Most commands are send to the `clean/cmd/send` endpoint. Here is an example of the "Find Robot" command, which makes it speak. 
 
 ```bash
 curl -X POST \
@@ -53,6 +53,7 @@ sn=361TY*******542&infoType=21020&data=%7B%22ctrlCode%22%3A3010%7D&devType=3
 
 # Main API Command List
 
+The following `infoType` values have been tested:
 
 Name | infoType | Request Data | Recieve Data | Notes
 --- | --- | --- | --- | ---
@@ -63,8 +64,21 @@ Heartbeat | 21006 | {"heartbeatSec":60} | None | Unsure what exactly it's used f
 Set Clean Mode | 21022 | {"cmd":"quiet", "cleanType":"total"} | None | cmd one of ["quiet","auto","strong","max"]
 Set LED mode | 21024 | {"cmd":"setledswitch","value":0} | None | 
 Set Avoid Walls | 21024 | {"cmd":"setSoftAlongWall", "value":1} | None |
+Find Robot | 21020 | {"ctrlCode":3010} | None |
 Unknown 1 | 21011 | {"startPos":0,"userId":"0","mask":0} | None | Unknown. Sent regularly during cleaning.
 Unknown 2 | 21015 | None | None | Sent once on boot. Unknown. Doesn't appear to cause any issues if it isn't sent.
+
+Where "None" is specified as a data type, the following is expected: 
+
+```json
+{
+  "errno": 0,
+  "errmsg": "Succeeded",
+  "data": {}
+}
+```
+
+A full list of error codes is available here: https://smart.360.cn/clean/errorInfo_us.json
 
 
 # UDP API
@@ -77,7 +91,12 @@ Reporting current position: `{"message":"OK","infoType":21020,"x":-261,"y":-392,
 
 Unknown, possibly to close connection: `{"infoType":21020,"data":{"ctrlCode":4000},"packId":194}`
 
-# API endpoints:
+# Status API
+
+There is another API at `101.198.193.215` that appears to be used by the app for for higher-traffic uses including battery status and mapping data. As sending commmands was my primary goal this has not been explored.
+
+
+# Main API endpoints:
 
 This is a list of endpoints which is used by the 360 mobile app to control 360 smart ai devices like 360 S5 / S6 / S7 vacuum cleaner.
 
