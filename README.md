@@ -125,6 +125,21 @@ https://q.smart.360.cn/clean/record/statis
 
 Returns total lifetime cleaning statistics for a given serial number, and the human readable string (data.clues) used on the Cleaning Report page of the app. 
 
+```json
+{
+  "errno": 0,
+  "errmsg": "Succeeded",
+  "data": {
+    "cleanArea": 594,
+    "cleanCount": 22,
+    "cleanTime": 44175,
+    "clues": "The accumulated cleaning area is equivalent to ((4.1)) basketball courts, saving you ((12.3)) hours",
+    "mopArea": 0
+  }
+}
+```
+
+
 https://q.smart.360.cn/clean/record/allStatis
 
 Similar to `clean/record/statis`, just returns seconds instead of hours. 
