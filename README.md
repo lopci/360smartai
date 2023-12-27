@@ -52,7 +52,7 @@ With the above info you can now send arbitrary commands to the vacuum. Most comm
 
 ```bash
 curl -X POST \
-  http://q.smart.360.cn/clean/cmd/send \
+  https://q.smart.360.cn/clean/cmd/send \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -H 'Host: q.smart.360.cn' \
   -H 'Connection: Keep-Alive' \
