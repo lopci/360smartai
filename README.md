@@ -107,15 +107,18 @@ Where "None" is specified as a data type, the following is expected:
 A full list of error codes is available here: https://smart.360.cn/clean/errorInfo_us.json
 
 
-# UDP API
+# UDP RC API
 
-There is a UDP API on port 8790. It is normally closed, and opened when RC mode is enabled. It operates similarly to the Main API. It is not yet known if normal infoType commands can be sent here; this could allow local control. All known commands use infoType 20120
+There is a UDP RC API on port 8790. It is normally closed, and opened when RC mode is enabled. It operates similarly to the Main API. It is not yet known if normal infoType commands can be sent here; this could allow local control. All known commands use infoType 20120
 
 Sending movement commands: `{"infoType":21020,"data":{"ctrlCode":3013,"ctrlParams":{"speedV":0.000000,"speedW":0.000000}},"packId":27}`
 
 Reporting current position: `{"message":"OK","infoType":21020,"x":-261,"y":-392,"angle":1410,"packId":27}`
 
 Unknown, possibly to close connection: `{"infoType":21020,"data":{"ctrlCode":4000},"packId":194}`
+
+Reversing the android app indicates a generic UDP API that appears to be able to recieve other commands, but this isn't supported on my vacuum. 
+
 
 # Status API
 
