@@ -1,8 +1,9 @@
 # 360 Robot Vaccum Reverse Engineering
 
 ToC:
-1. [Authentication](#authentication)
-1. [Sending Commands](#sending-commands)
+- [Authentication](#authentication)
+- [Sending Commands](#sending-commands)
+- [Home Assistant](#home-assistant)
 
 
 # Authentication
