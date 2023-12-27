@@ -121,6 +121,9 @@ Unknown, possibly to close connection: `{"infoType":21020,"data":{"ctrlCode":400
 
 There is another API at `101.198.193.215` that appears to be used by the app for for higher-traffic uses including battery status and mapping data. As sending commmands was my primary goal this has not been explored.
 
+It's unclear how this IP
+
+
 Might just be a proxy for data directly from the vac, stuff that the main API doesn't care about. I would like to get status info to integrate with Home Assistant, so this API is probably next.
 
 
