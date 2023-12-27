@@ -292,6 +292,49 @@ https://q.smart.360.cn/common/share/getInviteList
 http://p0.qhimg.com/t0123a732c50f157afd.png
 
 
+# Home Assistant
+
+A minimal working home assistant config. Place the cookie contents in a variable called `360_token` in `./secret.yaml`
+
+```yaml
+rest_command:
+  vacuum_pause_button:
+    url: "https://q.smart.360.cn/clean/cmd/send"
+    method: "post"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+      Host: q.smart.360.cn
+      Accept-Encoding: gzip
+      Cookie: !secret 360_token
+    payload: "sn=361TY000000000000&infoType=21017&data=%7B%22cmd%22%3A%22pause%22%7D&devType=3"
+  vacuum_charge_button:
+    url: "https://q.smart.360.cn/clean/cmd/send"
+    method: "post"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+      Host: q.smart.360.cn
+      Accept-Encoding: gzip
+      Cookie: !secret 360_token
+    payload: "sn=361TY000000000000&infoType=21012&data=%7B%22cmd%22%3A%22start%22%7D&devType=3"
+  vacuum_clean_button:
+    url: "https://q.smart.360.cn/clean/cmd/send"
+    method: "post"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+      Host: q.smart.360.cn
+      Accept-Encoding: gzip
+      Cookie: !secret 360_token
+    payload: "sn=361TY000000000000&infoType=21005&data=%7B%22mode%22%3A%22smartClean%22%2C%22globalCleanTimes%22%3A1%7D&devType=3"
+  vacuum_find_button:
+    url: "https://q.smart.360.cn/clean/cmd/send"
+    method: "post"
+    headers:
+      Content-Type: "application/x-www-form-urlencoded"
+      Host: q.smart.360.cn
+      Accept-Encoding: gzip
+      Cookie: !secret 360_token
+    payload: "sn=361TY000000000000&infoType=21020&data=%7B%22ctrlCode%22%3A3010%7D&devType=3"
+```
 
 # Notes
 
