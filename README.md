@@ -83,11 +83,13 @@ Unknown 2 | 21015 | None | None | Sent once on boot. Unknown. Doesn't appear to 
 
 The following have not yet been tested, use at your own risk:
 
+Name | infoType | Request Data | Recieve Data | Notes
+--- | --- | --- | --- | ---
 | setRemoteControlNet | 21037 | [str] | None | Possibly related to enabling the UDP interface |
 | reboot | 21024 | {"cmd":"reboot","value": [i2]} | None | Logs reboot task with specified delay in milliseconds |
 | getWifiInfo | 21019 | None | Unknown |
 
-
+A full list of all known infoTypes is available in the infoType_fields.md file.
 
 Command `30000` is unknown, may be related to "composite cmds" 
 
