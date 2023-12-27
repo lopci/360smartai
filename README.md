@@ -138,8 +138,14 @@ Might just be a proxy for data directly from the vac, stuff that the main API do
 
 ## Decrypting Push API packets
 
-The Push API uses a wonky AES implementation; you need to convert the key to ASCII hex, read it as UTF-8, and use the first 16 bytes as both the key and IV. 
+The Push API uses a wonky AES implementation; you need to convert the key to ASCII hex, read it as UTF-8, and use the first 16 bytes as both the key and IV. Here is an example of a decrypted packet:
 
+```text
+{"createTime":"1703612364","data":"{\"message\":\"ok\",\"infoType\":20001,\"data\":{\"allArea\":5943,\"allTime\":445962,\"autoBoost\":0,\"cleanArea\":3,\"cleanId\":\"361TY000003000000-1703612364\",\"cleanTime\":50,\"elec\":89,\"elecReal\":89,\"errorState\":[0],\"errorTime\":0,\"lastSubMode\":\"total\",\"led\":0,\"mode\":\"charge\",\"mopStatus\":0,\"phi\":-1953,\"pos\":[540,-483],\"reliable\":1,\"showSmartArea\":0,\"showSweepArea\":0,\"soft\":1,\"subMode\":\"null\",\"timeStamp\":1703612364,\"timerStatus\":10,\"vol\":9,\"windPower\":0,\"workNoisy\":\"quiet\"}}","event":4,"sn":"361TY000003000000","taskid":"1703612364234672"}
+```
+
+
+I don't yet know how to initiate a connection to the push API server. 
 
 # Main API endpoints:
 
