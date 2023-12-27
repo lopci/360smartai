@@ -25,7 +25,7 @@ If you have an Android phone or emulator with ADB setup, you can run the followi
 adb logcat | grep -m 1 MyPushMessageListener.java | tail -c 93
 ```
 
-It will output the
+It will output the QID, SID, and the Push Key. Save the push key, as this may be useful in the future. It is required for some data like battery status that uses the push server.
 
 
 ## Generating a cookie
