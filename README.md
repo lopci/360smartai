@@ -17,7 +17,16 @@ This is your user account number:
 
 ## Obtaining the SID:
 
-The SID is a 32-character long session ID used to authenticate HTTP requests to the API. Obtaining this key is currently non-trivial and will be documented after a better method is found for extracting it. 
+~~The SID is a 32-character long session ID used to authenticate HTTP requests to the API. Obtaining this key is currently non-trivial and will be documented after a better method is found for extracting it.~~
+
+If you have an Android phone or emulator with ADB setup, you can run the following command on your PC to dump the keys from the app's logs. (facepalm!) It may take a moment, to speed it along you can interact with the 360 app. 
+
+```bash
+adb logcat | grep -m 1 MyPushMessageListener.java | tail -c 93
+```
+
+It will output the
+
 
 ## Generating a cookie
 
