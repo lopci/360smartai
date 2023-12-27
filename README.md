@@ -4,7 +4,7 @@ ToC:
 1. [Authentication](#authentication)
 1. [Sending Commands](#sending-commands)
 
-2. 
+
 # Authentication
 
 A QID and SID, and vacuum SN are required. (User and session IDs)
@@ -107,7 +107,7 @@ Where "None" is specified as a data type, the following is expected:
 A full list of error codes is available here: https://smart.360.cn/clean/errorInfo_us.json
 
 
-# UDP RC API
+# UDP API
 
 There is a UDP RC API on port 8790. It is normally closed, and opened when RC mode is enabled. It operates similarly to the Main API. It is not yet known if normal infoType commands can be sent here; this could allow local control. All known commands use infoType 20120
 
@@ -119,15 +119,17 @@ Unknown, possibly to close connection: `{"infoType":21020,"data":{"ctrlCode":400
 
 Reversing the android app indicates a generic UDP API that appears to be able to recieve other commands, but this isn't supported on my vacuum. 
 
+# Push API
 
-# Status API
+There is another API at  that appears to be used by the app for for higher-traffic uses including battery status and mapping data. As sending commmands was my primary goal this has not been explored. On my device it shows traffic to `101.198.193.215`, which does not reverse to a DNS name. 
 
-There is another API at `101.198.193.215` that appears to be used by the app for for higher-traffic uses including battery status and mapping data. As sending commmands was my primary goal this has not been explored.
-
-It's unclear how this IP
-
+The data on this API is secured by a symmetric AES-128 key. 
 
 Might just be a proxy for data directly from the vac, stuff that the main API doesn't care about. I would like to get status info to integrate with Home Assistant, so this API is probably next.
+
+## Decrypting Push API packets
+
+The Push API uses a wonky AES implementation; you need to convert the key to ASCII hex, read it as UTF-8, and use the first 16 bytes as both the key and IV. 
 
 
 # Main API endpoints:
