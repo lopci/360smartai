@@ -65,6 +65,7 @@ sn=361TY*******542&infoType=21020&data=%7B%22ctrlCode%22%3A3010%7D&devType=3
 
 # Main API Command List
 
+## clean/cmd/send
 The following `infoType` values have been tested:
 
 Name | infoType | Request Data | Recieve Data | Notes
@@ -72,7 +73,7 @@ Name | infoType | Request Data | Recieve Data | Notes
 Clean | 21005 | {"mode":"smartClean","globalCleanTimes":1} | None |
 Recharge | 21012 | {"cmd":"start"} | None | 
 Pause | 21017 |  {"cmd":"pause"} | None |
-Heartbeat | 21006 | {"heartbeatSec":60} | None | Unsure what exactly it's used for
+Heartbeat | 21006 | {"heartbeatSec":60} | None | Unsure what exactly it's used for. Doesn't appear to cause any issues if it isn't sent.
 Set Clean Mode | 21022 | {"cmd":"quiet", "cleanType":"total"} | None | cmd one of ["quiet","auto","strong","max"]
 Set LED mode | 21024 | {"cmd":"setledswitch","value":0} | None | 
 Set Avoid Walls | 21024 | {"cmd":"setSoftAlongWall", "value":1} | None |
