@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en-US">
+
+<head>
+  <meta http-equiv="X-Clacks-Overhead" content="GNU Terry Pratchett" />
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<link rel="shortcut icon" href="https://stonegray.ca/images/favicon.png" />
+<title>360 Smart Vacuum | stonegray&#39;s site</title>
+<meta name="title" content="360 Smart Vacuum" />
+<meta name="description" content="I recently purchased a used broken 360 Smart Life S7 vacuum cleaner. It&rsquo;s an older model, and doesn&rsquo;t have any exposed API for control. All commands are sent via their propriatary app through the cloud.
+Just want to quickly connect to your home automation system? Premade configurations are at the end of the article or you can click to jump straight to Home Assistant or Homebridge.
+My initial plan was just to keep it offline entirely and stuff an ESP32 in it&rsquo;s head to remotely press the buttons and detect it&rsquo;s state, but I thought it would be a great opportunity to practice reversing Android applications, which I have little experience doing." />
+<meta name="keywords" content="hardware,homeassistant,reversing,hacks,long," />
+
+
+
+
+
+
+  
+  <meta property="og:title" content="360 Smart Vacuum" />
+<meta property="og:description" content="I recently purchased a used broken 360 Smart Life S7 vacuum cleaner. It&rsquo;s an older model, and doesn&rsquo;t have any exposed API for control. All commands are sent via their propriatary app through the cloud.
+Just want to quickly connect to your home automation system? Premade configurations are at the end of the article or you can click to jump straight to Home Assistant or Homebridge.
+My initial plan was just to keep it offline entirely and stuff an ESP32 in it&rsquo;s head to remotely press the buttons and detect it&rsquo;s state, but I thought it would be a great opportunity to practice reversing Android applications, which I have little experience doing." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://stonegray.ca/blog/360vac/" /><meta property="article:section" content="blog" />
+<meta property="article:published_time" content="2023-12-23T00:00:00+00:00" />
+<meta property="article:modified_time" content="2023-12-23T00:00:00+00:00" />
+
+
+  
+  <meta name="twitter:card" content="summary"/>
+<meta name="twitter:title" content="360 Smart Vacuum"/>
+<meta name="twitter:description" content="I recently purchased a used broken 360 Smart Life S7 vacuum cleaner. It&rsquo;s an older model, and doesn&rsquo;t have any exposed API for control. All commands are sent via their propriatary app through the cloud.
+Just want to quickly connect to your home automation system? Premade configurations are at the end of the article or you can click to jump straight to Home Assistant or Homebridge.
+My initial plan was just to keep it offline entirely and stuff an ESP32 in it&rsquo;s head to remotely press the buttons and detect it&rsquo;s state, but I thought it would be a great opportunity to practice reversing Android applications, which I have little experience doing."/>
+
+
+  
+  <meta itemprop="name" content="360 Smart Vacuum">
+<meta itemprop="description" content="I recently purchased a used broken 360 Smart Life S7 vacuum cleaner. It&rsquo;s an older model, and doesn&rsquo;t have any exposed API for control. All commands are sent via their propriatary app through the cloud.
+Just want to quickly connect to your home automation system? Premade configurations are at the end of the article or you can click to jump straight to Home Assistant or Homebridge.
+My initial plan was just to keep it offline entirely and stuff an ESP32 in it&rsquo;s head to remotely press the buttons and detect it&rsquo;s state, but I thought it would be a great opportunity to practice reversing Android applications, which I have little experience doing."><meta itemprop="datePublished" content="2023-12-23T00:00:00+00:00" />
+<meta itemprop="dateModified" content="2023-12-23T00:00:00+00:00" />
+<meta itemprop="wordCount" content="1858">
+<meta itemprop="keywords" content="hardware,homeassistant,reversing,hacks,long," />
+
+<meta name="referrer" content="no-referrer-when-downgrade" />
+
+  
+  <link href="/style.min.css" rel="stylesheet">
+
+  
+    
+    <link href="/syntax.min.css" rel="stylesheet">
+  
+
+  
+
+  
+</head>
+
+<body>
+  <header><a class="skip-link" href="#main-content">Skip to main content</a>
+
+<a href="/" class="title"><h1>stonegray&#39;s site</h1></a>
+<nav>
+  <a href="/">Home</a>
+
+  <a href="/blog/">Blog</a>
+
+<a href='https://stonegray.ca/index.xml'>RSS</a>
+
+
+
+
+
+
+
+</nav>
+</header>
+  <main id="main-content">
+
+<h1>360 Smart Vacuum</h1>
+<p class="byline">
+
+</p>
+
+<content>
+  <p>I recently purchased a used broken 360 Smart Life S7 vacuum cleaner. It&rsquo;s an older model, and doesn&rsquo;t have any exposed API for control. All commands are sent via their propriatary app through the cloud.</p>
+<blockquote>
+<p>Just want to quickly connect to your home automation system? Premade configurations are at the end of the article or you can click to jump straight to <a href="#home-assistant">Home Assistant</a> or <a href="#homebridge">Homebridge</a>.</p>
+</blockquote>
+<p>My initial plan was just to keep it offline entirely and stuff an ESP32 in it&rsquo;s head to remotely press the buttons and detect it&rsquo;s state, but I thought it would be a great opportunity to practice reversing Android applications, which I have little experience doing. This project had lots of new hurdles to jump, like patching out SSL pinning, hardcoded IP addresses, obfuscators/packers, broken crypto, and general weirdness.</p>
+<p>This documentation is not complete and will likely remain so; this vaccum is now named Dusty and lives at my mom&rsquo;s place, happly working with her Homebridge setup. Many of the APIs like retrieving mapping data are not documented, but core functionality (eg. triggering a cleaning) works great.</p>
+<h2 id="table-of-contents">Table of Contents</h2>
+<ol>
+<li><a href="#obtaining-keys">Obtaining vacuum keys</a></li>
+<li><a href="#sending-commands">Sending commands</a></li>
+<li><a href="#command-list-main-api">Command list</a></li>
+<li><a href="#home-assistant">Home Assistant</a></li>
+<li><a href="#homebridge">Homebridge</a></li>
+<li><a href="#additional-apis">Additional APIs</a></li>
+<li><a href="#notes">Notes</a></li>
+</ol>
+<h2 id="obtaining-keys">Obtaining Keys</h2>
+<p>A QID (Qihoo ID?) and SID (Session ID?), and vacuum SN are required to send commands to your vacuum.</p>
+<h3 id="qid">QID:</h3>
+<p>This is your user account number:</p>
+<ol>
+<li>Sign into the 360 website using this link: <a href="https://i.360.cn/login/?src=pcw_home&amp;destUrl=https://www.360.cn/">https://i.360.cn/reg/?src=pcw_open_app&amp;destUrl=http%3A%2F%2Fdev.app.360.cn%2Fapp%2Flist</a></li>
+<li>Visit <a href="http://open.app.360.cn/bbs/index">http://open.app.360.cn/developer/</a> and copy the ten digit number beginning in <code>360Uxxxxxxxx</code> at the top right. This is your QID. It should look like this: <code>3003705430</code></li>
+</ol>
+<h3 id="obtaining-the-sid">Obtaining the SID:</h3>
+<p><del>The SID is a 32-character long session ID used to authenticate HTTP requests to the API. Obtaining this key is currently non-trivial and will be documented after a better method is found for extracting it.</del></p>
+<p>Previously the only way to obtain the SID was to patch out the SSL pinning and intercept the HTTPS connections to the server. Convieniently, these keys are dumped right into the app&rsquo;s logs and can be accessed using ADB.</p>
+<p>If you have an Android phone or emulator with ADB setup, you can run the following command on your PC to dump the keys from the app&rsquo;s logs. (facepalm!) It may take a moment, to speed it along you can interact with the 360 app.</p>
+
+
+
+
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">adb logcat <span class="p">|</span> grep -m <span class="m">1</span> MyPushMessageListener.java <span class="p">|</span> tail -c <span class="m">93</span></span></span></code></pre></div><p>It will output the QID, SID, and the Push Key. Save the push key, as this may be useful in the future. It is required for some data like battery status that uses the push server.</p>
+<h3 id="generating-a-cookie">Generating a cookie</h3>
+<p>Once you have your SID and UID, you can use the following cookie to authenticate:</p>
+
+
+
+
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="ln">1</span><span class="cl">q=u=&amp;t=1;t=&amp;v=2.0&amp;a=1; qid=1234123412; sid=4a20145c62428d31b52b53c9ccbfcee4</span></span></code></pre></div><p>The <code>q=u=...</code> part is required, don&rsquo;t change it.</p>
+<h3 id="obtaining-the-sn">Obtaining the SN:</h3>
+<p>The SN can be viewed in Toolbox-&gt;Settings-&gt;Device Info on the app. You can also use the API to get a list of vaccums assosciated with your account using the command below.</p>
+
+
+
+
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">curl -X POST <span class="se">\
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="se"></span>  https://q.smart.360.cn/common/dev/GetList <span class="se">\
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="se"></span>  -H <span class="s1">&#39;Cookie: q=u=&amp;t=1;t=&amp;v=2.0&amp;a=1; qid=1234123412; sid=4a20145c62428d31b52b53c9ccbfcee4&#39;</span> <span class="err">\</span></span></span></code></pre></div><p>If you have multiple vacuumss, this is how you distinguish between them when sending API commands. It is required even if you only have one.</p>
+<h2 id="sending-commands">Sending commands</h2>
+<p>With the above info you can now send arbitrary commands to the vacuum. Most commands are send to the <code>clean/cmd/send</code> endpoint. Here is an example of the &ldquo;Find Robot&rdquo; command, which makes it speak.</p>
+
+
+
+
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-bash" data-lang="bash"><span class="line"><span class="ln">1</span><span class="cl">curl -X POST <span class="se">\
+</span></span></span><span class="line"><span class="ln">2</span><span class="cl"><span class="se"></span>  https://q.smart.360.cn/clean/cmd/send <span class="se">\
+</span></span></span><span class="line"><span class="ln">3</span><span class="cl"><span class="se"></span>  -H <span class="s1">&#39;Content-Type: application/x-www-form-urlencoded&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="ln">4</span><span class="cl"><span class="se"></span>  -H <span class="s1">&#39;Host: q.smart.360.cn&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="se"></span>  -H <span class="s1">&#39;Connection: Keep-Alive&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="ln">6</span><span class="cl"><span class="se"></span>  -H <span class="s1">&#39;Accept-Encoding: gzip&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="ln">7</span><span class="cl"><span class="se"></span>  -H <span class="s1">&#39;Cookie: q=u=&amp;t=1;t=&amp;v=2.0&amp;a=1; qid=1234123412; sid=4a20145c62428d31b52b53c9ccbfcee4&#39;</span> <span class="se">\
+</span></span></span><span class="line"><span class="ln">8</span><span class="cl"><span class="se"></span>  -d <span class="s1">&#39;sn=361TY*******542&amp;infoType=21020&amp;data=%7B%22ctrlCode%22%3A3010%7D&amp;devType=3&#39;</span></span></span></code></pre></div>
+
+
+
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="ln">1</span><span class="cl">POST /clean/cmd/send HTTP/1.1
+</span></span><span class="line"><span class="ln">2</span><span class="cl">Content-Type: application/x-www-form-urlencoded
+</span></span><span class="line"><span class="ln">3</span><span class="cl">Content-Length: 234
+</span></span><span class="line"><span class="ln">4</span><span class="cl">Host: q.smart.360.cn
+</span></span><span class="line"><span class="ln">5</span><span class="cl">Connection: Keep-Alive
+</span></span><span class="line"><span class="ln">6</span><span class="cl">Accept-Encoding: gzip
+</span></span><span class="line"><span class="ln">7</span><span class="cl">Cookie: q=u=&amp;t=1;t=&amp;v=2.0&amp;a=1; qid=1234123412; sid=4a20145c62428d31b52b53c9ccbfcee4
+</span></span><span class="line"><span class="ln">8</span><span class="cl">
+</span></span><span class="line"><span class="ln">9</span><span class="cl">sn=361TY*******542&amp;infoType=21020&amp;data=%7B%22ctrlCode%22%3A3010%7D&amp;devType=3</span></span></code></pre></div><h2 id="command-list-main-api">Command List (Main API)</h2>
+<p>A full list of known commands is here:</p>
+<p><a href="https://github.com/stonegray/360smartai/blob/master/infoType_fields.md">https://github.com/stonegray/360smartai/blob/master/infoType_fields.md</a></p>
+<p>The following <code>infoType</code> values have been tested:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>infoType</th>
+<th>Request Data</th>
+<th>Recieve Data</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Clean</td>
+<td>21005</td>
+<td>{&ldquo;mode&rdquo;:&ldquo;smartClean&rdquo;,&ldquo;globalCleanTimes&rdquo;:1}</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr>
+<td>Recharge</td>
+<td>21012</td>
+<td>{&ldquo;cmd&rdquo;:&ldquo;start&rdquo;}</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr>
+<td>Pause</td>
+<td>21017</td>
+<td>{&ldquo;cmd&rdquo;:&ldquo;pause&rdquo;}</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr>
+<td>Heartbeat</td>
+<td>21006</td>
+<td>{&ldquo;heartbeatSec&rdquo;:60}</td>
+<td>None</td>
+<td>Unsure what exactly it&rsquo;s used for. Doesn&rsquo;t appear to cause any issues if it isn&rsquo;t sent.</td>
+</tr>
+<tr>
+<td>Set Clean Mode</td>
+<td>21022</td>
+<td>{&ldquo;cmd&rdquo;:&ldquo;quiet&rdquo;, &ldquo;cleanType&rdquo;:&ldquo;total&rdquo;}</td>
+<td>None</td>
+<td>cmd one of [&ldquo;quiet&rdquo;,&ldquo;auto&rdquo;,&ldquo;strong&rdquo;,&ldquo;max&rdquo;]</td>
+</tr>
+<tr>
+<td>Set LED mode</td>
+<td>21024</td>
+<td>{&ldquo;cmd&rdquo;:&ldquo;setledswitch&rdquo;,&ldquo;value&rdquo;:0}</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr>
+<td>Set Avoid Walls</td>
+<td>21024</td>
+<td>{&ldquo;cmd&rdquo;:&ldquo;setSoftAlongWall&rdquo;, &ldquo;value&rdquo;:1}</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr>
+<td>Find Robot</td>
+<td>21020</td>
+<td>{&ldquo;ctrlCode&rdquo;:3010}</td>
+<td>None</td>
+<td></td>
+</tr>
+<tr>
+<td>Unknown 1</td>
+<td>21011</td>
+<td>{&ldquo;startPos&rdquo;:0,&ldquo;userId&rdquo;:&ldquo;0&rdquo;,&ldquo;mask&rdquo;:0}</td>
+<td>None</td>
+<td>Unknown. Sent regularly during cleaning.</td>
+</tr>
+<tr>
+<td>Unknown 2</td>
+<td>21015</td>
+<td>None</td>
+<td>None</td>
+<td>Sent once on boot. Unknown. Doesn&rsquo;t appear to cause any issues if it isn&rsquo;t sent.</td>
+</tr>
+</tbody>
+</table>
+<p>The following have not yet been tested, use at your own risk:</p>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>infoType</th>
+<th>Request Data</th>
+<th>Recieve Data</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>setRemoteControlNet</td>
+<td>21037</td>
+<td>[str]</td>
+<td>None</td>
+<td>Possibly related to enabling the UDP interface</td>
+</tr>
+<tr>
+<td>reboot</td>
+<td>21024</td>
+<td>{&ldquo;cmd&rdquo;:&ldquo;reboot&rdquo;,&ldquo;value&rdquo;: [i2]}</td>
+<td>None</td>
+<td>Logs reboot task with specified delay in milliseconds</td>
+</tr>
+<tr>
+<td>getWifiInfo</td>
+<td>21019</td>
+<td>None</td>
+<td>Unknown</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<p>A full list of all known infoTypes is available in the infoType_fields.md file.</p>
+<p>Command <code>30000</code> is unknown, may be related to &ldquo;composite cmds&rdquo;</p>
+<p>Where &ldquo;None&rdquo; is specified as a data type, the following is expected:</p>
+
+
+
+
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln">1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln">2</span><span class="cl">  <span class="nt">&#34;errno&#34;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">3</span><span class="cl">  <span class="nt">&#34;errmsg&#34;</span><span class="p">:</span> <span class="s2">&#34;Succeeded&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">4</span><span class="cl">  <span class="nt">&#34;data&#34;</span><span class="p">:</span> <span class="p">{}</span>
+</span></span><span class="line"><span class="ln">5</span><span class="cl"><span class="p">}</span></span></span></code></pre></div><p>A full list of error codes is available here: <a href="https://smart.360.cn/clean/errorInfo_us.json">https://smart.360.cn/clean/errorInfo_us.json</a></p>
+<h2 id="additional-apis">Additional APIs</h2>
+<p>There are a number of additional endpoints available:</p>
+<h3 id="udp-api">UDP API</h3>
+<p>There is a UDP RC API on port 8790. It is normally closed, and opened when RC mode is enabled. It operates similarly to the Main API. It is not yet known if normal infoType commands can be sent here; this could allow local control. All known commands use infoType 20120</p>
+<p>Sending movement commands: <code>{&quot;infoType&quot;:21020,&quot;data&quot;:{&quot;ctrlCode&quot;:3013,&quot;ctrlParams&quot;:{&quot;speedV&quot;:0.000000,&quot;speedW&quot;:0.000000}},&quot;packId&quot;:27}</code></p>
+<p>Reporting current position: <code>{&quot;message&quot;:&quot;OK&quot;,&quot;infoType&quot;:21020,&quot;x&quot;:-261,&quot;y&quot;:-392,&quot;angle&quot;:1410,&quot;packId&quot;:27}</code></p>
+<p>Unknown, possibly to close connection: <code>{&quot;infoType&quot;:21020,&quot;data&quot;:{&quot;ctrlCode&quot;:4000},&quot;packId&quot;:194}</code></p>
+<p>Reversing the android app indicates a generic UDP API that appears to be able to recieve other commands, but this isn&rsquo;t supported on my vacuum.</p>
+<h3 id="push-api">Push API</h3>
+<p>There is another API at  that appears to be used by the app for for higher-traffic uses including battery status and mapping data. As sending commmands was my primary goal this has not been explored. On my device it shows traffic to <code>101.198.193.215</code>, which does not reverse to a DNS name.</p>
+<p>Might just be a proxy for data directly from the vac, stuff that the main API doesn&rsquo;t care about. I would like to get status info to integrate with Home Assistant, so this API is probably next.</p>
+<p>Here is an example of a decrypted packet:</p>
+
+
+
+
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-text" data-lang="text"><span class="line"><span class="ln">1</span><span class="cl">{&#34;createTime&#34;:&#34;1703612364&#34;,&#34;data&#34;:&#34;{\&#34;message\&#34;:\&#34;ok\&#34;,\&#34;infoType\&#34;:20001,\&#34;data\&#34;:{\&#34;allArea\&#34;:5943,\&#34;allTime\&#34;:445962,\&#34;autoBoost\&#34;:0,\&#34;cleanArea\&#34;:3,\&#34;cleanId\&#34;:\&#34;361TY000003000000-1703612364\&#34;,\&#34;cleanTime\&#34;:50,\&#34;elec\&#34;:89,\&#34;elecReal\&#34;:89,\&#34;errorState\&#34;:[0],\&#34;errorTime\&#34;:0,\&#34;lastSubMode\&#34;:\&#34;total\&#34;,\&#34;led\&#34;:0,\&#34;mode\&#34;:\&#34;charge\&#34;,\&#34;mopStatus\&#34;:0,\&#34;phi\&#34;:-1953,\&#34;pos\&#34;:[540,-483],\&#34;reliable\&#34;:1,\&#34;showSmartArea\&#34;:0,\&#34;showSweepArea\&#34;:0,\&#34;soft\&#34;:1,\&#34;subMode\&#34;:\&#34;null\&#34;,\&#34;timeStamp\&#34;:1703612364,\&#34;timerStatus\&#34;:10,\&#34;vol\&#34;:9,\&#34;windPower\&#34;:0,\&#34;workNoisy\&#34;:\&#34;quiet\&#34;}}&#34;,&#34;event&#34;:4,&#34;sn&#34;:&#34;361TY000003000000&#34;,&#34;taskid&#34;:&#34;1703612364234672&#34;}</span></span></code></pre></div><p>Decrypting the packets is non-trivial, you need to patch the application to dump the keys at runtime. The Push API uses a wonky AES implementation; you need to convert the key to ASCII hex, read it as UTF-8, and use the first 16 bytes as both the key and IV for AES-128 in CBC mode.</p>
+
+
+
+
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-java" data-lang="java"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="kt">byte</span><span class="o">[]</span> <span class="nf">decrypt</span><span class="o">(</span><span class="n">string</span><span class="o">:</span> <span class="n">key</span><span class="o">,</span> <span class="kt">byte</span><span class="o">[]:</span> <span class="n">data</span><span class="o">)</span> <span class="o">{</span>
+</span></span><span class="line"><span class="ln"> 2</span><span class="cl">    <span class="kt">byte</span><span class="o">[]</span> <span class="n">k</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="na">getBytes</span><span class="o">(</span><span class="s">&#34;utf-8&#34;</span><span class="o">);</span>
+</span></span><span class="line"><span class="ln"> 3</span><span class="cl">    <span class="kt">byte</span><span class="o">[]</span> <span class="n">_k</span> <span class="o">=</span> <span class="k">new</span> <span class="kt">byte</span><span class="o">[</span><span class="n">16</span><span class="o">];</span>
+</span></span><span class="line"><span class="ln"> 4</span><span class="cl">
+</span></span><span class="line"><span class="ln"> 5</span><span class="cl">    <span class="k">for</span> <span class="o">(</span><span class="kt">int</span> <span class="n">i2</span> <span class="o">=</span> <span class="n">0</span><span class="o">;</span> <span class="n">i2</span> <span class="o">&lt;</span> <span class="n">k</span><span class="o">.</span><span class="na">len</span> <span class="o">&amp;&amp;</span> <span class="n">i2</span> <span class="o">&lt;</span> <span class="n">16</span><span class="o">;</span> <span class="n">i2</span><span class="o">++)</span> <span class="o">{</span>
+</span></span><span class="line"><span class="ln"> 6</span><span class="cl">        <span class="n">_k</span><span class="o">[</span><span class="n">i2</span><span class="o">]</span> <span class="o">=</span> <span class="n">k</span><span class="o">[</span><span class="n">i2</span><span class="o">];</span>
+</span></span><span class="line"><span class="ln"> 7</span><span class="cl">    <span class="o">}</span>
+</span></span><span class="line"><span class="ln"> 8</span><span class="cl">
+</span></span><span class="line"><span class="ln"> 9</span><span class="cl">    <span class="n">c</span> <span class="o">=</span> <span class="n">crypto</span><span class="o">.</span><span class="na">init</span><span class="o">(</span>
+</span></span><span class="line"><span class="ln">10</span><span class="cl">	    <span class="s">&#34;decrypt&#34;</span><span class="o">,</span> 
+</span></span><span class="line"><span class="ln">11</span><span class="cl">	    <span class="s">&#34;aes-128-cbc&#34;</span><span class="o">,</span> 
+</span></span><span class="line"><span class="ln">12</span><span class="cl">	    <span class="n">key</span><span class="o">:</span> <span class="n">_k</span><span class="o">,</span> 
+</span></span><span class="line"><span class="ln">13</span><span class="cl">	    <span class="n">iv</span><span class="o">:</span> <span class="n">_k</span>
+</span></span><span class="line"><span class="ln">14</span><span class="cl">	<span class="o">);</span>
+</span></span><span class="line"><span class="ln">15</span><span class="cl">    <span class="k">return</span> <span class="n">c</span><span class="o">.</span><span class="na">decrypt</span><span class="o">(</span><span class="n">data</span><span class="o">);</span>
+</span></span><span class="line"><span class="ln">16</span><span class="cl"><span class="o">}</span></span></span></code></pre></div><p>Misuse of key as IV aside, decoding a hex string as <code>utf-8</code> means every byte is the ASCII character for one of 0x0-0xF (4 bits), not 0x00-0xFF (8 bits) if decoded as <code>hex</code>, so knowing that you can only make a key with these chars (eg. <code>0x616564376264...</code>) gives us a significantly reduced key strength of (drumroll please&hellip;):</p>
+<blockquote>
+<p>16 characters * 4  bits = 64 bits</p>
+</blockquote>
+<p>I don&rsquo;t yet know how to initiate a connection to the push API server. It appears a seperate key is required.</p>
+<h3 id="other">Other</h3>
+<p>This is a list of endpoints which is used by the 360 mobile app to control 360 smart ai devices like 360 S5 / S6 / S7 vacuum cleaner.</p>
+<p>Many of these were initially documented by <a href="https://github.com/iMarkus">@iMarkus</a>, you can view their original list <a href="https://github.com/iMarkus/360smartai">here</a>.</p>
+<ul>
+<li><a href="https://q.smart.360.cn/clean/cmd/send">https://q.smart.360.cn/clean/cmd/send</a>: See above</li>
+<li><a href="https://q.smart.360.cn/clean/devuser/updateInfo">https://q.smart.360.cn/clean/devuser/updateInfo</a>:</li>
+<li><a href="https://q.smart.360.cn/clean/record/statis">https://q.smart.360.cn/clean/record/statis</a>:
+Returns total lifetime cleaning statistics for a given serial number, and the human readable string (data.clues) used on the Cleaning Report page of the app.
+
+
+
+
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 2</span><span class="cl">  <span class="nt">&#34;errno&#34;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 3</span><span class="cl">  <span class="nt">&#34;errmsg&#34;</span><span class="p">:</span> <span class="s2">&#34;Succeeded&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 4</span><span class="cl">  <span class="nt">&#34;data&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 5</span><span class="cl">    <span class="nt">&#34;cleanArea&#34;</span><span class="p">:</span> <span class="mi">594</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 6</span><span class="cl">    <span class="nt">&#34;cleanCount&#34;</span><span class="p">:</span> <span class="mi">22</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 7</span><span class="cl">    <span class="nt">&#34;cleanTime&#34;</span><span class="p">:</span> <span class="mi">44175</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 8</span><span class="cl">    <span class="nt">&#34;clues&#34;</span><span class="p">:</span> <span class="s2">&#34;The accumulated cleaning area is equivalent to ((4.1)) basketball courts, saving you ((12.3)) hours&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 9</span><span class="cl">    <span class="nt">&#34;mopArea&#34;</span><span class="p">:</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="ln">10</span><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="ln">11</span><span class="cl"><span class="p">}</span></span></span></code></pre></div></li>
+<li><a href="https://q.smart.360.cn/clean/record/allStatis">https://q.smart.360.cn/clean/record/allStatis</a>: Similar to <code>clean/record/statis</code>, just returns seconds instead of hours.
+
+
+
+
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 2</span><span class="cl">  <span class="nt">&#34;errno&#34;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 3</span><span class="cl">  <span class="nt">&#34;errmsg&#34;</span><span class="p">:</span> <span class="s2">&#34;Succeeded&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 4</span><span class="cl">  <span class="nt">&#34;data&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 5</span><span class="cl">    <span class="nt">&#34;allCleanArea&#34;</span><span class="p">:</span> <span class="mi">5183</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 6</span><span class="cl">    <span class="nt">&#34;allCleanCount&#34;</span><span class="p">:</span> <span class="mi">662</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 7</span><span class="cl">    <span class="nt">&#34;allCleanTime&#34;</span><span class="p">:</span> <span class="mi">833558</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 8</span><span class="cl">    <span class="nt">&#34;allMopArea&#34;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 9</span><span class="cl">    <span class="nt">&#34;bindNum&#34;</span><span class="p">:</span> <span class="mi">1</span>
+</span></span><span class="line"><span class="ln">10</span><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="ln">11</span><span class="cl"><span class="p">}</span></span></span></code></pre></div></li>
+<li><a href="https://q.smart.360.cn/clean/record/getList">https://q.smart.360.cn/clean/record/getList</a>: Returns an array of recent cleaning sessions, including time, modes, statistiscs and success. Indexed by <code>data.list[].cleanId</code>, which is a string in the format <code>${Serial}-${Timestamp}</code>, (which appears to match <code>data.list[].startTime</code>)</li>
+<li><a href="https://q.smart.360.cn/clean/record/recentlycleanlist">https://q.smart.360.cn/clean/record/recentlycleanlist</a>: Returns monthly and weekly history of square meters cleaned. Used on the Cleaning Report page of the app.</li>
+<li><a href="https://q.smart.360.cn/clean/record/getOne">https://q.smart.360.cn/clean/record/getOne</a>:</li>
+<li><a href="https://q.smart.360.cn/clean/ad/applist">https://q.smart.360.cn/clean/ad/applist</a>:</li>
+<li><a href="https://q.smart.360.cn/clean/dev/getMaterialStatus">https://q.smart.360.cn/clean/dev/getMaterialStatus</a>: Unknown. No data is sent or recieved, just &ldquo;Succeeded&rdquo;. Appears to be accessed once on first launch.</li>
+<li><a href="https://smart.360.cn/clean/modelalias.json">https://smart.360.cn/clean/modelalias.json</a>: Returns a list of all the vaccum models with some OTA and naming data. Has flags (ovLogReport and cnLogReport) that appear to be whether log reporting is enabled on overseas servers and domestic servers</li>
+<li><a href="https://smart.360.cn/clean/errorInfo_us.json">https://smart.360.cn/clean/errorInfo_us.json</a>: No authentication required. Returns a list of error codes and localized (en_us) strings.</li>
+<li><a href="https://q.smart.360.cn/clean/record/getBackupMapList">https://q.smart.360.cn/clean/record/getBackupMapList</a>: Mapping</li>
+<li><a href="https://q.smart.360.cn/s3_file_new/iot-master-clean-online-pub1-bjyt">https://q.smart.360.cn/s3_file_new/iot-master-clean-online-pub1-bjyt</a>: Mapping</li>
+</ul>
+<p>Other APIs:</p>
+<ul>
+<li><a href="https://smart.360.cn/clean/errorInfo_us.json">https://smart.360.cn/clean/errorInfo_us.json</a></li>
+<li><a href="https://smart.360.cn/clean/share_act.json">https://smart.360.cn/clean/share_act.json</a></li>
+<li><a href="https://smart.360.cn/clean_dev/list_en_us.json">https://smart.360.cn/clean_dev/list_en_us.json</a></li>
+<li><a href="https://sdk.s.360.cn/ak/e995f98d56967d946471af29d7bf99f1.html?m2=8D7ACEB0-8EA1-4AD5-9339-34D01918FC4A">https://sdk.s.360.cn/ak/e995f98d56967d946471af29d7bf99f1.html?m2=8D7ACEB0-8EA1-4AD5-9339-34D01918FC4A</a></li>
+<li><a href="https://p.s.360.cn/update/update.php">https://p.s.360.cn/update/update.php</a></li>
+<li><a href="https://ota3.jia.360.cn/upgrade/getNewVersion">https://ota3.jia.360.cn/upgrade/getNewVersion</a></li>
+<li><a href="https://p.s.360.cn/pstat/plog.php">https://p.s.360.cn/pstat/plog.php</a>: Statistics</li>
+<li><a href="https://q.smart.360.cn/common/dev/GetList">https://q.smart.360.cn/common/dev/GetList</a>: Returns a list of vaccums assosciated with an account. Authentication required.
+
+
+
+
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 2</span><span class="cl">  <span class="nt">&#34;errno&#34;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 3</span><span class="cl">  <span class="nt">&#34;errmsg&#34;</span><span class="p">:</span> <span class="s2">&#34;Succeeded&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 4</span><span class="cl">  <span class="nt">&#34;data&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 5</span><span class="cl">    <span class="nt">&#34;list&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="ln"> 6</span><span class="cl">      <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 7</span><span class="cl">        <span class="nt">&#34;sn&#34;</span><span class="p">:</span> <span class="s2">&#34;[redacted]&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 8</span><span class="cl">        <span class="nt">&#34;devType&#34;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 9</span><span class="cl">        <span class="nt">&#34;icon&#34;</span><span class="p">:</span> <span class="s2">&#34;https://p.ssl.qhimg.com/t01047fcf6ee991aeb9.png&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">10</span><span class="cl">        <span class="nt">&#34;title&#34;</span><span class="p">:</span> <span class="s2">&#34;Example Vacuum&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">11</span><span class="cl">        <span class="nt">&#34;hardware&#34;</span><span class="p">:</span> <span class="s2">&#34;S7&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">12</span><span class="cl">        <span class="nt">&#34;pkcode&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">13</span><span class="cl">        <span class="nt">&#34;hwSn&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">14</span><span class="cl">        <span class="nt">&#34;version&#34;</span><span class="p">:</span> <span class="s2">&#34;1.8.9&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">15</span><span class="cl">        <span class="nt">&#34;versionCode&#34;</span><span class="p">:</span> <span class="mi">2976</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">16</span><span class="cl">        <span class="nt">&#34;role&#34;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">17</span><span class="cl">        <span class="nt">&#34;online&#34;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">18</span><span class="cl">        <span class="nt">&#34;support&#34;</span><span class="p">:</span> <span class="s2">&#34;{\&#34;carpetMode\&#34;:1,\&#34;cleanTimesInTimer\&#34;:1,\&#34;deleteMap\&#34;:1,\&#34;led\&#34;:1,\&#34;logReport\&#34;:1,\&#34;maxBanArea30\&#34;:1,\&#34;maxMode\&#34;:1,\&#34;mop\&#34;:1,\&#34;mopBanArea\&#34;:1,\&#34;multiQuietHours\&#34;:1,\&#34;reboot\&#34;:1,\&#34;remoteControl\&#34;:1,\&#34;remoteControlWithMap\&#34;:1,\&#34;restoreMap\&#34;:1,\&#34;roomSweep\&#34;:1,\&#34;rotateMap\&#34;:1,\&#34;rssi\&#34;:1,\&#34;saveMap\&#34;:1,\&#34;setRoomAttrib\&#34;:1,\&#34;smartArea\&#34;:1,\&#34;softAlongWall\&#34;:1,\&#34;sweepAreaInTimer\&#34;:1,\&#34;timedSweepMode\&#34;:1,\&#34;virtualWall\&#34;:1,\&#34;voicePacket\&#34;:1,\&#34;volume\&#34;:1}&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">19</span><span class="cl">        <span class="nt">&#34;alexaDefault&#34;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">20</span><span class="cl">        <span class="nt">&#34;ownerQid&#34;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">21</span><span class="cl">        <span class="nt">&#34;ownerImage&#34;</span><span class="p">:</span> <span class="s2">&#34;&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">22</span><span class="cl">        <span class="nt">&#34;ownerNickName&#34;</span><span class="p">:</span> <span class="s2">&#34;[redacted]&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">23</span><span class="cl">        <span class="nt">&#34;bindTime&#34;</span><span class="p">:</span> <span class="mi">0</span>
+</span></span><span class="line"><span class="ln">24</span><span class="cl">      <span class="p">}</span>
+</span></span><span class="line"><span class="ln">25</span><span class="cl">    <span class="p">]</span>
+</span></span><span class="line"><span class="ln">26</span><span class="cl">  <span class="p">}</span>
+</span></span><span class="line"><span class="ln">27</span><span class="cl"><span class="p">}</span></span></span></code></pre></div></li>
+<li><a href="https://q.smart.360.cn/common/share/getInviteList">https://q.smart.360.cn/common/share/getInviteList</a></li>
+<li><a href="https://q.smart.360.cn/common/share/inviteByCode">https://q.smart.360.cn/common/share/inviteByCode</a></li>
+<li><a href="https://q.smart.360.cn/common/share/getInviteList">https://q.smart.360.cn/common/share/getInviteList</a></li>
+</ul>
+<h1 id="home-assistant">Home Assistant</h1>
+<p>A minimal working home assistant config. Place the cookie contents in a variable called <code>360_token</code> in <code>./secret.yaml</code></p>
+
+
+
+
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-yaml" data-lang="yaml"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="nt">rest_command</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 2</span><span class="cl"><span class="w">  </span><span class="nt">vacuum_pause_button</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 3</span><span class="cl"><span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;https://q.smart.360.cn/clean/cmd/send&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 4</span><span class="cl"><span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;post&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 5</span><span class="cl"><span class="w">    </span><span class="nt">headers</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 6</span><span class="cl"><span class="w">      </span><span class="nt">Content-Type</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;application/x-www-form-urlencoded&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 7</span><span class="cl"><span class="w">      </span><span class="nt">Host</span><span class="p">:</span><span class="w"> </span><span class="l">q.smart.360.cn</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 8</span><span class="cl"><span class="w">      </span><span class="nt">Accept-Encoding</span><span class="p">:</span><span class="w"> </span><span class="l">gzip</span><span class="w">
+</span></span></span><span class="line"><span class="ln"> 9</span><span class="cl"><span class="w">      </span><span class="nt">Cookie</span><span class="p">:</span><span class="w"> </span>!<span class="l">secret 360_token</span><span class="w">
+</span></span></span><span class="line"><span class="ln">10</span><span class="cl"><span class="w">    </span><span class="nt">payload</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;sn=361TY000000000000&amp;infoType=21017&amp;data=%7B%22cmd%22%3A%22pause%22%7D&amp;devType=3&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">11</span><span class="cl"><span class="w">  </span><span class="nt">vacuum_charge_button</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">12</span><span class="cl"><span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;https://q.smart.360.cn/clean/cmd/send&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">13</span><span class="cl"><span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;post&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">14</span><span class="cl"><span class="w">    </span><span class="nt">headers</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">15</span><span class="cl"><span class="w">      </span><span class="nt">Content-Type</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;application/x-www-form-urlencoded&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">16</span><span class="cl"><span class="w">      </span><span class="nt">Host</span><span class="p">:</span><span class="w"> </span><span class="l">q.smart.360.cn</span><span class="w">
+</span></span></span><span class="line"><span class="ln">17</span><span class="cl"><span class="w">      </span><span class="nt">Accept-Encoding</span><span class="p">:</span><span class="w"> </span><span class="l">gzip</span><span class="w">
+</span></span></span><span class="line"><span class="ln">18</span><span class="cl"><span class="w">      </span><span class="nt">Cookie</span><span class="p">:</span><span class="w"> </span>!<span class="l">secret 360_token</span><span class="w">
+</span></span></span><span class="line"><span class="ln">19</span><span class="cl"><span class="w">    </span><span class="nt">payload</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;sn=361TY000000000000&amp;infoType=21012&amp;data=%7B%22cmd%22%3A%22start%22%7D&amp;devType=3&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">20</span><span class="cl"><span class="w">  </span><span class="nt">vacuum_clean_button</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">21</span><span class="cl"><span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;https://q.smart.360.cn/clean/cmd/send&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">22</span><span class="cl"><span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;post&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">23</span><span class="cl"><span class="w">    </span><span class="nt">headers</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">24</span><span class="cl"><span class="w">      </span><span class="nt">Content-Type</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;application/x-www-form-urlencoded&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">25</span><span class="cl"><span class="w">      </span><span class="nt">Host</span><span class="p">:</span><span class="w"> </span><span class="l">q.smart.360.cn</span><span class="w">
+</span></span></span><span class="line"><span class="ln">26</span><span class="cl"><span class="w">      </span><span class="nt">Accept-Encoding</span><span class="p">:</span><span class="w"> </span><span class="l">gzip</span><span class="w">
+</span></span></span><span class="line"><span class="ln">27</span><span class="cl"><span class="w">      </span><span class="nt">Cookie</span><span class="p">:</span><span class="w"> </span>!<span class="l">secret 360_token</span><span class="w">
+</span></span></span><span class="line"><span class="ln">28</span><span class="cl"><span class="w">    </span><span class="nt">payload</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;sn=361TY000000000000&amp;infoType=21005&amp;data=%7B%22mode%22%3A%22smartClean%22%2C%22globalCleanTimes%22%3A1%7D&amp;devType=3&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">29</span><span class="cl"><span class="w">  </span><span class="nt">vacuum_find_button</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">30</span><span class="cl"><span class="w">    </span><span class="nt">url</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;https://q.smart.360.cn/clean/cmd/send&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">31</span><span class="cl"><span class="w">    </span><span class="nt">method</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;post&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">32</span><span class="cl"><span class="w">    </span><span class="nt">headers</span><span class="p">:</span><span class="w">
+</span></span></span><span class="line"><span class="ln">33</span><span class="cl"><span class="w">      </span><span class="nt">Content-Type</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;application/x-www-form-urlencoded&#34;</span><span class="w">
+</span></span></span><span class="line"><span class="ln">34</span><span class="cl"><span class="w">      </span><span class="nt">Host</span><span class="p">:</span><span class="w"> </span><span class="l">q.smart.360.cn</span><span class="w">
+</span></span></span><span class="line"><span class="ln">35</span><span class="cl"><span class="w">      </span><span class="nt">Accept-Encoding</span><span class="p">:</span><span class="w"> </span><span class="l">gzip</span><span class="w">
+</span></span></span><span class="line"><span class="ln">36</span><span class="cl"><span class="w">      </span><span class="nt">Cookie</span><span class="p">:</span><span class="w"> </span>!<span class="l">secret 360_token</span><span class="w">
+</span></span></span><span class="line"><span class="ln">37</span><span class="cl"><span class="w">    </span><span class="nt">payload</span><span class="p">:</span><span class="w"> </span><span class="s2">&#34;sn=361TY000000000000&amp;infoType=21020&amp;data=%7B%22ctrlCode%22%3A3010%7D&amp;devType=3&#34;</span></span></span></code></pre></div><h2 id="homebridge">Homebridge</h2>
+<p>The <code>homebridge-http-switch</code> plugin is required. Adjust name/room as required, I find &ldquo;Turn on Vaccum Cleaner&rdquo; works great with Siri.</p>
+
+
+
+
+
+<div class="highlight"><pre tabindex="0" class="chroma"><code class="language-json" data-lang="json"><span class="line"><span class="ln"> 1</span><span class="cl"><span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 2</span><span class="cl">  <span class="nt">&#34;accessories&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="ln"> 3</span><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 4</span><span class="cl">      <span class="nt">&#34;accessory&#34;</span><span class="p">:</span> <span class="s2">&#34;HTTP-SWITCH&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 5</span><span class="cl">      <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;Vacuum Cleaner&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 6</span><span class="cl">      <span class="nt">&#34;switchType&#34;</span><span class="p">:</span> <span class="s2">&#34;stateless&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 7</span><span class="cl">      <span class="nt">&#34;onUrl&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln"> 8</span><span class="cl">        <span class="nt">&#34;url&#34;</span><span class="p">:</span> <span class="s2">&#34;https://q.smart.360.cn/clean/cmd/send&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln"> 9</span><span class="cl">        <span class="nt">&#34;method&#34;</span><span class="p">:</span> <span class="s2">&#34;POST&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">10</span><span class="cl">        <span class="nt">&#34;headers&#34;</span><span class="p">:</span> <span class="p">{</span>
+</span></span><span class="line"><span class="ln">11</span><span class="cl">          <span class="nt">&#34;Content-Type&#34;</span><span class="p">:</span> <span class="s2">&#34;application/x-www-form-urlencoded&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">12</span><span class="cl">          <span class="nt">&#34;Host&#34;</span><span class="p">:</span> <span class="s2">&#34;q.smart.360.cn&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">13</span><span class="cl">          <span class="nt">&#34;Accept-Encoding&#34;</span><span class="p">:</span> <span class="s2">&#34;gzip&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">14</span><span class="cl">          <span class="nt">&#34;Cookie&#34;</span><span class="p">:</span> <span class="err">/Insert</span> <span class="err">your</span> <span class="err">cookie</span> <span class="err">here/</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">15</span><span class="cl">        <span class="p">},</span>
+</span></span><span class="line"><span class="ln">16</span><span class="cl">        <span class="nt">&#34;body&#34;</span><span class="p">:</span> <span class="s2">&#34;sn=361TY0000000000 &amp;infoType=21005&amp;data=%7B%22mode%22%3A%22smartClean%22%2C%22globalCleanTimes%22%3A1%7D&amp;devType=3&#34;</span>
+</span></span><span class="line"><span class="ln">17</span><span class="cl">      <span class="p">}</span>
+</span></span><span class="line"><span class="ln">18</span><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="ln">19</span><span class="cl">  <span class="p">],</span>
+</span></span><span class="line"><span class="ln">20</span><span class="cl">  <span class="nt">&#34;platforms&#34;</span><span class="p">:</span> <span class="p">[],</span>
+</span></span><span class="line"><span class="ln">21</span><span class="cl">  <span class="nt">&#34;plugins&#34;</span><span class="p">:</span> <span class="p">[</span>
+</span></span><span class="line"><span class="ln">22</span><span class="cl">    <span class="p">{</span>
+</span></span><span class="line"><span class="ln">23</span><span class="cl">      <span class="nt">&#34;platform&#34;</span><span class="p">:</span> <span class="s2">&#34;homebridge-http-switch&#34;</span><span class="p">,</span>
+</span></span><span class="line"><span class="ln">24</span><span class="cl">      <span class="nt">&#34;name&#34;</span><span class="p">:</span> <span class="s2">&#34;homebridge-http-switch&#34;</span>
+</span></span><span class="line"><span class="ln">25</span><span class="cl">    <span class="p">}</span>
+</span></span><span class="line"><span class="ln">26</span><span class="cl">  <span class="p">]</span>
+</span></span><span class="line"><span class="ln">27</span><span class="cl"><span class="p">}</span></span></span></code></pre></div><h1 id="notes">Notes</h1>
+<p>There&rsquo;s a few abbreviations used in their logging:</p>
+<p>&ldquo;jioe&rdquo; is JSONIOException, &ldquo;ste&rdquo; is SocketTimeoutException, and</p>
+<p>The package name <code>com.qihoo.smarthome.sweeper.ui.o1</code> is RC mode, UDP reciever</p>
+<h1 id="references">References</h1>
+<p><a href="https://github.com/iMarkus/360smartai">https://github.com/iMarkus/360smartai</a></p>
+
+</content>
+<p>
+  
+    <a class="blog-tags" href="https://stonegray.ca/tags/hardware/">#hardware</a>&nbsp;&nbsp;
+  
+    <a class="blog-tags" href="https://stonegray.ca/tags/homeassistant/">#homeassistant</a>&nbsp;&nbsp;
+  
+    <a class="blog-tags" href="https://stonegray.ca/tags/reversing/">#reversing</a>&nbsp;&nbsp;
+  
+    <a class="blog-tags" href="https://stonegray.ca/tags/hacks/">#hacks</a>&nbsp;&nbsp;
+  
+    <a class="blog-tags" href="https://stonegray.ca/tags/long/">#long</a>&nbsp;&nbsp;
+  
+</p>
+
+
+  </main>
+  <footer><small>
+  (c) stonegray 2015-2024 | <a href="/about">about</a> | <a href="/login">login</a>
+</small></footer>
+
+    
+<!-- Cloudflare Pages Analytics --><script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "6078ff765e1049f2bfeb1cc67122d75a"}'></script><!-- Cloudflare Pages Analytics --><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"rayId":"8a465d675de79986","version":"2024.7.0","r":1,"token":"3b64234a0e3048679de5c4f36cbf6bff","serverTiming":{"name":{"cfL4":true}}}' crossorigin="anonymous"></script>
+</body>
+
+</html>
